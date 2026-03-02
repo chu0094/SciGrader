@@ -1,0 +1,581 @@
+/*毛效果组件 - Glassmorphism Components */
+/*这个文件包含所有毛玻璃效果和高级视觉组件 */
+
+/*基础毛玻璃卡片 */
+.glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(0, 212, 255, 0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+/*毛导航栏 */
+.glass-navbar {
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 16px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/*毛侧边栏 */
+.glass-sidebar {
+  background: rgba(30, 41, 59, 0.6);
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  padding: 24px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/*模态框 */
+.glass-modal {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00D4FF, #00F5D4, #8B5CF6);
+}
+
+/*毛按钮 */
+.glass-btn {
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  padding: 12px 24px;
+  color: #00D4FF;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-btn:hover {
+  background: rgba(0, 212, 255, 0.25);
+  border-color: #00D4FF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3), 0 0 20px rgba(0, 212, 255, 0.2);
+  color: #00F5D4;
+}
+
+.glass-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.glass-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.glass-btn:hover::before {
+  left: 100%;
+}
+
+/*毛输入框 */
+.glass-input {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  color: #F1F5F9;
+  font-size: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: #00D4FF;
+  background: rgba(30, 41, 59, 0.7);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.glass-input::placeholder {
+  color: #94A3B8;
+}
+
+/*毛标签页 */
+.glass-tabs {
+  display: flex;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 16px;
+  padding: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.glass-tab {
+  flex: 1;
+  padding: 12px 24px;
+  text-align: center;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.glass-tab.active {
+  background: rgba(0, 212, 255, 0.2);
+  color: #00D4FF;
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.glass-tab:hover:not(.active) {
+  background: rgba(148, 163, 184, 0.1);
+  color: #CBD5E1;
+}
+
+/*毛进度条 */
+.glass-progress {
+  height: 12px;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.glass-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #00D4FF, #00F5D4, #8B5CF6);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.glass-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: progress-shine 2s infinite;
+}
+
+@keyframes progress-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/*毛工具提示 */
+.glass-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #F1F5F9;
+  font-size: 14px;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1000;
+}
+
+.glass-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border: inherit;
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+/*毛徽章 */
+.glass-badge {
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 20px;
+  padding: 6px 12px;
+  color: #00D4FF;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.glass-badge.success {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10B981;
+}
+
+.glass-badge.warning {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #F59E0B;
+}
+
+.glass-badge.error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+}
+
+/*毛列表项 */
+.glass-list-item {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.glass-list-item:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(0, 212, 255, 0.3);
+  transform: translateX(5px);
+}
+
+.glass-list-item.active {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.5);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+/*毛分隔器 */
+.glass-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent);
+  margin: 24px 0;
+  position: relative;
+}
+
+.glass-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #00D4FF, #00F5D4);
+  border-radius: 1px;
+}
+
+/*毛加载器 */
+.glass-loader {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(30, 41, 59, 0.5);
+  border-top: 3px solid #00D4FF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/*毛骨架屏 */
+.glass-skeleton {
+  background: linear-gradient(90deg, 
+    rgba(30, 41, 59, 0.3) 25%, 
+    rgba(30, 41, 59, 0.5) 50%, 
+    rgba(30, 41, 59, 0.3) 75%);
+  background-size: 200% 100%;
+  border-radius: 12px;
+  animation: skeleton-loading 1.5s infinite;
+  height: 20px;
+  margin-bottom: 12px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/*毛通知 */
+.glass-notification {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-notification.show {
+  transform: translateX(0);
+}
+
+.glass-notification::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(0deg, #00D4FF, #00F5D4, #8B5CF6);
+}
+
+.glass-notification.success::before {
+  background: linear-gradient(0deg, #10B981, #34D399);
+}
+
+.glass-notification.error::before {
+  background: linear-gradient(0deg, #EF4444, #F87171);
+}
+
+.glass-notification.warning::before {
+  background: linear-gradient(0deg, #F59E0B, #FBBF24);
+}
+
+/*毛下拉菜单 */
+.glass-dropdown {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  padding: 8px;
+  min-width: 200px;
+  z-index: 1000;
+}
+
+.glass-dropdown-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #CBD5E1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.glass-dropdown-item:hover {
+  background: rgba(0, 212, 255, 0.1);
+  color: #00D4FF;
+}
+
+.glass-dropdown-item i {
+  width: 20px;
+  text-align: center;
+}
+
+/*毛时间线 */
+.glass-timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.glass-timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(0deg, 
+    rgba(0, 212, 255, 0.3), 
+    rgba(139, 92, 246, 0.3));
+}
+
+.glass-timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.glass-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -35px;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00D4FF;
+  border: 3px solid rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.3);
+}
+
+/*毛卡片组 */
+.glass-card-group {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/*毛统计卡片 */
+.glass-stat-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-stat-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.glass-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #00D4FF, #00F5D4, #8B5CF6);
+}
+
+.glass-stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #00D4FF;
+  margin: 16px 0;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.glass-stat-label {
+  color: #94A3B8;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/*毛用户头像 */
+.glass-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #00D4FF, #8B5CF6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-avatar::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: rotate(45deg);
+  animation: avatar-shine 3s infinite;
+}
+
+@keyframes avatar-shine {
+  0% { transform: rotate(45deg) translate(-100%, -100%); }
+  100% { transform: rotate(45deg) translate(100%, 100%); }
+}
+
+/*毛状态指示器 */
+.glass-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.glass-status.online {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10B981;
+}
+
+.glass-status.offline {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94A3B8;
+}
+
+.glass-status.busy {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #F59E0B;
+}
+
+.glass-status.away {
+  background: rgba(96, 165, 250, 0.15);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  color: #60A5FA;
+}
