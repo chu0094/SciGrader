@@ -1,22 +1,15 @@
-# 核心依赖
+# 核心依赖 - 版本兼容
 streamlit==1.32.0
+rich>=10.14.0,<14  # 改成版本范围，不要固定14.3.3
 markdown-it-py==4.0.0
 mdurl==0.1.2
 Pygments==2.19.2
-rich==14.3.3
 
-# 数据库相关
+# 数据库驱动
 mysql-connector-python==8.3.0
 pymysql==1.1.0
 
-# 数据处理
-pandas==2.1.4
-
-# 工具库
-python-dotenv==1.0.0
-Pillow==10.2.0
-requests==2.31.0
-
-# FastAPI 相关（如果需要本地 API 调用）
-fastapi==0.109.0
-uvicorn==0.27.0
+# 数据处理 - 指定兼容Python 3.14的版本
+pandas>=2.2.0  # 使用更新的pandas版本，对Python 3.14支持更好
+# 或者如果还不行，改用纯Python版本
+# pandas==2.1.4 --no-binary pandas
