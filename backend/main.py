@@ -123,7 +123,7 @@ if __name__ == "__main__":
     import uvicorn
     
     # 从 .env 文件读取配置
-    host = os.environ.get("BACKEND_HOST", "localhost")
+    host = os.environ.get("BACKEND_HOST", "0.0.0.0")
     port = int(os.environ.get("BACKEND_PORT", "8000"))
         
     logger.info(f"启动 FastAPI 后端服务，监听 http://{host}:{port}")
