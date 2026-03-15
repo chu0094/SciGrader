@@ -2,7 +2,7 @@ import uuid
 import asyncio
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, List
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from functools import lru_cache
@@ -105,6 +105,14 @@ def get_processed_rubric(q_id: str, rubric_text: str) -> str:
 
 class GradingRequest(BaseModel):
     student_id: str
+
+class SubmissionGradingRequest(BaseModel):
+    """作业提交批改请求 ⭐ 新增"""
+    submission_id: str
+    assignment_id: int
+    student_id: int
+    content: str
+    problems: List[dict]
 
 class BatchGradingRequest(BaseModel):
     # Empty for now, but could include options for batch grading
@@ -720,3 +728,150 @@ def get_all_history():
     # In a real implementation, we might want to check if mock data should be included
     
     return all_history
+
+
+@router.post("/submit")
+async def submit_for_grading(request: SubmissionGradingRequest):
+    """
+    ⭐ 新增：作业提交并立即返回 AI 批改结果
+    用于学生提交作业后自动触发 AI 批改
+    """
+    import time as time_module
+    start_time = time_module.time()
+    
+    logger.info(f"收到作业提交批改请求：submission_id={request.submission_id}, assignment_id={request.assignment_id}, problems_count={len(request.problems)}")
+    
+    try:
+        # 构建 problem_store
+        problem_store = {}
+        for problem in request.problems:
+            q_id = str(problem['problem_id'])
+            problem_store[q_id] = {
+                'q_id': q_id,
+                'number': problem.get('problem_number', ''),
+                'type': map_problem_type_to_internal(problem.get('problem_type', '概念题')),
+                'stem': problem.get('description', ''),
+                'criterion': problem.get('reference_answer', '默认评分标准'),
+                'max_score': problem.get('max_score', 10.0),
+                'problem_type': problem.get('problem_type', '概念题')  # 保留原始中文类型
+            }
+        
+        # 构建 student_store
+        student_store = {
+            str(request.student_id): {
+                'stu_id': str(request.student_id),
+                'stu_name': f'Student_{request.student_id}',
+                'stu_ans': build_student_answers(request.content, request.problems)
+            }
+        }
+        
+        logger.info(f"开始批改作业：submission_id={request.submission_id}, 题目数量={len(request.problems)}")
+        
+        # 直接处理批改（同步方式，立即返回结果）
+        result = await process_student_submission(
+            student_store[str(request.student_id)],
+            problem_store
+        )
+        
+        if not result:
+            logger.error(f"批改失败，无法处理 submission：submission_id={request.submission_id}")
+            return {
+                "status": "error",
+                "message": "批改失败，无法处理 submission"
+            }
+        
+        # 计算总分和生成评语
+        total_score = sum(c.score for c in result.get('corrections', []))
+        comments = generate_comments_from_corrections(result.get('corrections', []))
+        
+        # ⭐ 新增：记录批改耗时
+        elapsed_time = time_module.time() - start_time
+        logger.info(f"作业批改完成：submission_id={request.submission_id}, total_score={total_score}, 耗时={elapsed_time:.2f}秒")
+        
+        return {
+            "status": "success",
+            "submission_id": request.submission_id,
+            "total_score": total_score,
+            "comments": comments,
+            "corrections": [format_correction_for_response(c) for c in result.get('corrections', [])],
+            "grading_time": elapsed_time  # ⭐ 新增：返回批改耗时
+        }
+        
+    except Exception as e:
+        logger.error(f"作业批改失败：{e}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+
+def map_problem_type_to_internal(problem_type: str) -> str:
+    """将题目类型映射到内部类型 ⭐"""
+    type_mapping = {
+        "概念题": "concept",
+        "其他": "concept",
+        "其它": "concept",
+        "计算题": "calculation",
+        "证明题": "proof",
+        "推理题": "proof",
+        "编程题": "programming"
+    }
+    return type_mapping.get(problem_type, "concept")
+
+
+def build_student_answers(content: str, problems: List[dict]) -> List[dict]:
+    """构建学生答案列表 ⭐"""
+    answers = []
+    for problem in problems:
+        answers.append({
+            'q_id': str(problem['problem_id']),
+            'type': problem.get('problem_type', '概念题'),
+            'content': content  # 使用相同的内容（假设是对所有问题的综合回答）
+        })
+    return answers
+
+
+def generate_comments_from_corrections(corrections: List) -> str:
+    """从批改结果生成总体评语 ⭐"""
+    if not corrections:
+        return "未进行批改"
+    
+    # 计算得分率
+    total_score = sum(c.score for c in corrections)
+    max_score = sum(c.max_score for c in corrections)
+    score_rate = total_score / max_score if max_score > 0 else 0
+    
+    # 根据得分率生成评价
+    if score_rate >= 0.9:
+        overall_comment = "🎉 优秀！完成得非常出色！"
+    elif score_rate >= 0.7:
+        overall_comment = "👍 良好！继续保持！"
+    elif score_rate >= 0.6:
+        overall_comment = "😊 及格！还有进步空间！"
+    else:
+        overall_comment = "💪 加油！需要更多练习！"
+    
+    # 添加每题的反馈
+    problem_feedback = []
+    for c in corrections:
+        if c.score >= c.max_score * 0.8:
+            feedback = f"✅ {c.q_id}: 回答正确，得{c.score}分"
+        elif c.score > 0:
+            feedback = f"✓ {c.q_id}: 部分正确，得{c.score}分"
+        else:
+            feedback = f"❌ {c.q_id}: 回答错误，得 0 分"
+        problem_feedback.append(feedback)
+    
+    return f"{overall_comment}\n\n{' | '.join(problem_feedback)}"
+
+
+def format_correction_for_response(correction) -> dict:
+    """格式化批改结果为响应格式 ⭐"""
+    return {
+        'q_id': correction.q_id,
+        'type': correction.type,
+        'score': correction.score,
+        'max_score': correction.max_score,
+        'confidence': correction.confidence,
+        'comment': correction.comment
+    }

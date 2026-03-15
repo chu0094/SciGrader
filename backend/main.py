@@ -1,23 +1,27 @@
 # app/main.py
 import sys
 import os
+from dotenv import load_dotenv
+
+# 加载 .env 文件中的环境变量（项目根目录）
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+load_dotenv(env_path)
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import prob_preview, hw_preview, ai_grading, human_edit
+from backend.routers import prob_preview, hw_preview, ai_grading, human_edit, assignment
 # from app.db import init_db
 import logging
-import random
 
 # --- 日志和应用基础设置 ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="SmarTAI")
+    app = FastAPI(title="SciGrader")
 
     # 可以在这里做全局中间件、事件、异常处理器注册等
     # include 各模块的 router
@@ -25,12 +29,18 @@ def create_app() -> FastAPI:
     app.include_router(hw_preview.router)   # 会自动挂载到 /file_preview（见 file_preview.py）
     app.include_router(ai_grading.router)   # 挂载到 /ai_grading
     app.include_router(human_edit.router)
-
+    app.include_router(assignment.router)
     # Configure CORS for deployment
-    # For local development, allow all origins
-    # For production, you should specify the exact origins
-    frontend_origins = os.environ.get("FRONTEND_URLS", "http://localhost:8501,http://localhost:8501")
-    origins = frontend_origins.split(",")
+    # 从 .env 文件读取 FRONTEND_URLS 配置
+    frontend_origins_str = os.environ.get("FRONTEND_URLS", "http://localhost:8501")
+    origins = [origin.strip() for origin in frontend_origins_str.split(",")] if frontend_origins_str else []
+    
+    # Add default localhost origin
+    if "http://localhost:8501" not in origins:
+        origins.append("http://localhost:8501")
+    
+    # Log the configured origins
+    logger.info(f"Configured CORS origins: {origins}")
     
     app.add_middleware(
         CORSMiddleware,
@@ -42,7 +52,7 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     def read_root():
-        return {"message": "SmarTAI Backend is running", "status": "success"}
+        return {"message": "SciGrader Backend is running", "status": "success"}
 
     @app.get("/health")
     async def health_check():
@@ -59,7 +69,7 @@ def create_app() -> FastAPI:
         
         return {
             "status": "healthy", 
-            "message": "SmarTAI backend is running",
+            "message": "SciGrader backend is running",
             "memory_usage_mb": round(memory_mb, 2),
             "cpu_percent": cpu_percent
         }
@@ -112,8 +122,9 @@ app = create_app()
 if __name__ == "__main__":
     import uvicorn
     
-    # Get port from environment variable or use random port
-    port = int(os.environ.get("BACKEND_PORT", random.randint(8000, 9000)))
-    
-    logger.info(f"启动FastAPI后端服务，监听 http://localhost:{port}")
-    uvicorn.run(app, host="localhost", port=port)  # Changed from 127.0.0.1 to localhost
+    # 从 .env 文件读取配置
+    host = os.environ.get("BACKEND_HOST", "localhost")
+    port = int(os.environ.get("BACKEND_PORT", "8000"))
+        
+    logger.info(f"启动 FastAPI 后端服务，监听 http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port)

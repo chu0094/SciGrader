@@ -111,49 +111,49 @@ def get_student_store() -> Dict[str,Dict[str, Any]]:
 # 若需使用代理，请取消以下两行注释
 # os.environ["HTTP_PROXY"] = "http://127.0.0.1:7897"
 # os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7897"
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyA6BAa8PgdrfgX9WO-zFAOiBG6aWanNmto") #"AIzaSyCTHCicOOCvfqirIVg1xcGvUYl5h58l7U0"
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+# GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyA6BAa8PgdrfgX9WO-zFAOiBG6aWanNmto") #"AIzaSyCTHCicOOCvfqirIVg1xcGvUYl5h58l7U0"
+# GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
 
 # 您需要使用支持视觉（多模态）的模型，例如 "gpt-4o"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_API_KEY_HERE")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "5be2cc1f1560438da0b6100441cd9172.YmvR0A7yd7BIZ9tN")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://open.bigmodel.cn/api/paas/v4")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "glm-4.5-air")
 
 CONTEXT_WINDOW_THRESHOLD_CHARS = 200000 
 
 # async def get_llm(model="gemini") -> ChatOpenAI:
-def get_llm(model="gemini") -> ChatOpenAI:
+def get_llm(model="zhipu") -> ChatOpenAI:
     """返回共享的LLM客户端实例。"""
 
-    if model == "gemini":
-        if not GEMINI_API_KEY:
-            logger.error("API 密钥未设置，后端调用将失败！")
-            raise ValueError("GEMINI_API_KEY not found")
+    # if model == "gemini":
+    #     if not GEMINI_API_KEY:
+    #         logger.error("API 密钥未设置，后端调用将失败！")
+    #         raise ValueError("GEMINI_API_KEY not found")
 
-        try:
-            # 核心改动在这里：
-            # 1. 类从 ChatOpenAI 变为 ChatGoogleGenerativeAI
-            # 2. 参数从 api_key, base_url 变为 model, google_api_key
-            gemini_client = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,  # 或者其他模型名
-                temperature=0.0,
-                transport="rest",
-                timeout=600,
-                max_retries=2,
-                google_api_key=GEMINI_API_KEY,
-            )
-            logger.info("LangChain Gemini 客户端初始化成功！")
+    #     try:
+    #         # 核心改动在这里：
+    #         # 1. 类从 ChatOpenAI 变为 ChatGoogleGenerativeAI
+    #         # 2. 参数从 api_key, base_url 变为 model, google_api_key
+    #         gemini_client = ChatGoogleGenerativeAI(
+    #             model=GEMINI_MODEL,  # 或者其他模型名
+    #             temperature=0.0,
+    #             transport="rest",
+    #             timeout=600,
+    #             max_retries=2,
+    #             google_api_key=GEMINI_API_KEY,
+    #         )
+    #         logger.info("LangChain Gemini 客户端初始化成功！")
             
-            # 你可以继续使用 gemini_client 这个变量，就像你之前使用 zhipu_ai 一样
-            # 例如: gemini_client.invoke("你好")
+    #         # 你可以继续使用 gemini_client 这个变量，就像你之前使用 zhipu_ai 一样
+    #         # 例如: gemini_client.invoke("你好")
 
-        except Exception as e:
-            logger.error(f"初始化 LangChain Gemini 客户端失败: {e}")
-            gemini_client = None
+    #     except Exception as e:
+    #         logger.error(f"初始化 LangChain Gemini 客户端失败: {e}")
+    #         gemini_client = None
 
-        return gemini_client
+    #     return gemini_client
 
-    elif model == "zhipu":
+    if model == "zhipu":
         if not OPENAI_API_KEY:
             logger.error("环境变量 OPENAI_API_KEY 未设置，后端调用将失败！")
             raise ValueError("OPENAI_API_KEY not found")

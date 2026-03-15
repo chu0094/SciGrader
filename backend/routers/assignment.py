@@ -1,0 +1,210 @@
+"""
+SciGrader 作业管理 API 路由
+提供作业的增删改查、提交等功能
+"""
+import logging
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+
+# Add parent directory to path to import from frontend utils
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+try:
+    from frontend.utils.db_utils import DatabaseManager as get_db_manager
+except ImportError:
+    # Fallback: create a simple DB manager
+    logger.warning("Could not import db_manager, using mock implementation")
+    def get_db_manager():
+        raise NotImplementedError("Database manager not available")
+
+router = APIRouter(prefix="/api/assignments", tags=["assignments"])
+
+
+class AssignmentCreate(BaseModel):
+    hw_code: str
+    teacher_id: int
+    title: str
+    description: str
+    course_name: str
+    total_score: float
+    due_time: datetime
+    questions: List[Dict[str, Any]] = []
+
+
+class AssignmentResponse(BaseModel):
+    hw_id: int
+    hw_code: str
+    title: str
+    description: Optional[str]
+    course_name: Optional[str]
+    total_score: float
+    due_time: datetime
+    assignment_status: str
+    submit_status: str
+    submit_id: Optional[int]
+    submitted_score: Optional[float]
+    submit_time: Optional[datetime]
+    attempt_no: Optional[int]
+
+
+class SubmissionCreate(BaseModel):
+    hw_id: int
+    student_id: int
+    answers: Dict[str, Any]
+
+
+@router.post("/create", summary="创建作业")
+async def create_assignment(assignment: AssignmentCreate):
+    db = get_db_manager()
+    try:
+        # 1. 创建作业
+        hw_id = db.create_assignment(
+            hw_code=assignment.hw_code,
+            teacher_id=assignment.teacher_id,
+            title=assignment.title,
+            description=assignment.description,
+            course_name=assignment.course_name,
+            total_score=assignment.total_score,
+            due_time=assignment.due_time
+        )
+        
+        # 2. 添加作业题目
+        for idx, question in enumerate(assignment.questions):
+            db.add_assignment_question(
+                hw_id=hw_id,
+                q_id=question['q_id'],
+                question_order=idx + 1,
+                score=question.get('score', 0)
+            )
+        
+        logger.info(f"作业创建成功：hw_id={hw_id}")
+        return {
+            "status": "success",
+            "message": "作业创建成功",
+            "hw_id": hw_id
+        }
+        
+    except Exception as e:
+        logger.error(f"创建作业失败：{e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/list/{student_id}", response_model=List[AssignmentResponse])
+async def get_student_assignments(student_id: int):
+    db = get_db_manager()
+    try:
+        assignments = db.get_assignments_for_student(student_id)
+        
+        result = []
+        for a in assignments:
+            result.append({
+                "hw_id": a["hw_id"],
+                "hw_code": a["hw_code"],
+                "title": a["title"],
+                "description": a["description"],
+                "course_name": a["course_name"],
+                "total_score": float(a["total_score"]),
+                "due_time": a["due_time"],
+                "assignment_status": a["assignment_status"],
+                "submit_status": a["submit_status"],
+                "submit_id": a["submit_id"],
+                "submitted_score": float(a["submitted_score"]) if a["submitted_score"] else None,
+                "submit_time": a["submit_time"],
+                "attempt_no": a["attempt_no"]
+            })
+        
+        logger.info(f"获取学生 {student_id} 的作业列表成功")
+        return result
+        
+    except Exception as e:
+        logger.error(f"获取作业列表失败：{e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{hw_id}/questions")
+async def get_assignment_questions(hw_id: int):
+    db = get_db_manager()
+    try:
+        questions = db.get_assignment_questions(hw_id)
+        logger.info(f"获取作业 {hw_id} 的题目成功")
+        return {
+            "status": "success",
+            "hw_id": hw_id,
+            "questions": questions,
+            "count": len(questions)
+        }
+        
+    except Exception as e:
+        logger.error(f"获取作业题目失败：{e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/submit")
+async def submit_assignment(submission: SubmissionCreate):
+    db = get_db_manager()
+    try:
+        existing = db.get_submission_by_student_and_hw(
+            submission.student_id, 
+            submission.hw_id
+        )
+        
+        attempt_no = 1
+        if existing:
+            attempt_no = existing.get("attempt_no", 0) + 1
+        
+        submit_id = db.create_submission(
+            hw_id=submission.hw_id,
+            student_id=submission.student_id,
+            submit_content=submission.answers,
+            attempt_no=attempt_no
+        )
+        
+        logger.info(f"作业提交成功：submit_id={submit_id}")
+        return {
+            "status": "success",
+            "message": "作业提交成功",
+            "submit_id": submit_id,
+            "attempt_no": attempt_no
+        }
+        
+    except Exception as e:
+        logger.error(f"提交作业失败：{e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/stats/{student_id}")
+async def get_student_stats(student_id: int):
+    db = get_db_manager()
+    try:
+        assignments = db.get_assignments_for_student(student_id)
+        
+        total = len(assignments)
+        completed = sum(1 for a in assignments if a.get("submit_status") == "submitted")
+        pending = sum(1 for a in assignments if a.get("submit_status") == "pending")
+        overdue = sum(1 for a in assignments if a.get("submit_status") == "overdue")
+        
+        completion_rate = round((completed / total * 100), 2) if total > 0 else 0
+        
+        stats = {
+            "total_assignments": total,
+            "completed": completed,
+            "pending": pending,
+            "overdue": overdue,
+            "completion_rate": completion_rate
+        }
+        
+        logger.info(f"获取学生 {student_id} 的统计数据成功")
+        return {
+            "status": "success",
+            "student_id": student_id,
+            "stats": stats
+        }
+        
+    except Exception as e:
+        logger.error(f"获取统计数据失败：{e}")
+        raise HTTPException(status_code=500, detail=str(e))
