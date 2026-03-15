@@ -1,10 +1,22 @@
+# 核心依赖
 streamlit==1.32.0
+markdown-it-py==4.0.0
+mdurl==0.1.2
+Pygments==2.19.2
+rich==14.3.3
+
+# 数据库相关
 mysql-connector-python==8.3.0
+pymysql==1.1.0
+
+# 数据处理
 pandas==2.1.4
+
+# 工具库
 python-dotenv==1.0.0
 Pillow==10.2.0
 requests==2.31.0
-markdown-it-py==3.0.0
-mdurl==0.1.2
-pygments==2.17.2
-rich==13.7.0
+
+# FastAPI 相关（如果需要本地 API 调用）
+fastapi==0.109.0
+uvicorn==0.27.0
