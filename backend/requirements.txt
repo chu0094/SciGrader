@@ -5,13 +5,16 @@ langchain
 langchain-openai
 langchain-google-genai
 openai
-structlog
+structflow
 pydantic
 python-multipart
 rarfile
 py7zr
 requests
 psutil
+# Database drivers
+mysql-connector-python>=8.3.0,<9.0.0
+pymysql>=1.1.0,<2.0.0
 click>=8.1.0,<9.0.0
 charset-normalizer>=3.0.0,<4.0.0
 annotated-types>=0.7.0,<1.0.0

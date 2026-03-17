@@ -10,17 +10,28 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# Add parent directory to path to import from frontend utils
+# Import database manager from backend (not frontend!)
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 try:
-    from frontend.utils.db_utils import DatabaseManager as get_db_manager
-except ImportError:
-    # Fallback: create a simple DB manager
-    logger.warning("Could not import db_manager, using mock implementation")
+    from backend.db_manager import get_db_manager
+    logger.info("✅ Successfully imported DatabaseManager from backend.db_manager")
+except ImportError as e:
+    logger.warning(f"❌ Could not import db_manager from backend: {e}")
+    logger.warning("⚠️ Using mock implementation - NO DATABASE PERSISTENCE!")
+    
+    class MockDatabaseManager:
+        """Mock database manager for when real DB is not available"""
+        def create_connection(self):
+            return False
+        def execute_query(self, query, params=None, fetch=False):
+            logger.warning(f"Mock DB call: {query[:50]}...")
+            return [] if fetch else True
+    
     def get_db_manager():
-        raise NotImplementedError("Database manager not available")
+        return MockDatabaseManager()
 
 router = APIRouter(prefix="/api/assignments", tags=["assignments"])
 
