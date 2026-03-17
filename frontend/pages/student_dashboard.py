@@ -686,13 +686,16 @@ def render_graded_assignments_section():
                 st.metric("系统评分", f"{score}分" if score else "未评分")
             
             if work.get('submission_content'):
-                st.text_area("提交答案", work['submission_content'], disabled=True, height=100)
+                st.text_area("提交答案", work['submission_content'], disabled=True, height=100,
+                           key=f"submission_{work.get('submission_id', hash(work['assignment_title']))}")
             
             if work.get('auto_grade_comments'):
-                st.text_area("系统评语", work['auto_grade_comments'], disabled=True, height=80)
+                st.text_area("系统评语", work['auto_grade_comments'], disabled=True, height=80,
+                           key=f"auto_{work.get('submission_id', hash(work['assignment_title']))}")
             
             if work.get('teacher_comments'):
-                st.text_area("教师评语", work['teacher_comments'], disabled=True, height=80)
+                st.text_area("教师评语", work['teacher_comments'], disabled=True, height=80,
+                           key=f"teacher_{work.get('submission_id', hash(work['assignment_title']))}")
 
 
 def render_right_panel(user_info):
