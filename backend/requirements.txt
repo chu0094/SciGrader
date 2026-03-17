@@ -5,7 +5,6 @@ langchain
 langchain-openai
 langchain-google-genai
 openai
-structflow
 pydantic
 python-multipart
 rarfile
