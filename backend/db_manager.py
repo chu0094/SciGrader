@@ -26,6 +26,7 @@ class DatabaseManager:
             'password': os.getenv('DB_PASSWORD', ''),
             'database': os.getenv('DB_NAME', 'scigrader_db')
         }
+        logger.info(f"📦 DatabaseManager initialized with config: host={self.db_config['host']}, database={self.db_config['database']}")
     
     def create_connection(self) -> bool:
         """创建数据库连接"""
@@ -194,14 +195,17 @@ class DatabaseManager:
         return result[0] if result else None
 
 
-# 单例模式
+# 单例模式（延迟初始化）
 _db_manager_instance: Optional[DatabaseManager] = None
 
 
 def get_db_manager() -> DatabaseManager:
-    """获取数据库管理器单例"""
+    """获取数据库管理器单例（延迟初始化）"""
     global _db_manager_instance
     if _db_manager_instance is None:
+        logger.info("🔧 Creating DatabaseManager instance for the first time...")
         _db_manager_instance = DatabaseManager()
-        _db_manager_instance.create_connection()
+        # ⭐ 关键修改：不要在这里立即连接数据库！
+        # 让第一次实际查询时再连接
+        logger.info("✅ DatabaseManager instance created (not yet connected)")
     return _db_manager_instance

@@ -3,9 +3,17 @@ import sys
 import os
 from dotenv import load_dotenv
 
-# 加载 .env 文件中的环境变量（项目根目录）
+# Add the project root to the Python path FIRST
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Load environment variables from .env file (for local development)
+# On Render, env vars are set in the dashboard
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
-load_dotenv(env_path)
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+    print(f"✅ Loaded .env from: {env_path}")
+else:
+    print(f"⚠️ .env file not found at {env_path}, using environment variables")
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,15 +29,48 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    import logging
+    
+    # Setup logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    logger.info("🚀 Starting to create FastAPI app...")
+    
     app = FastAPI(title="SciGrader")
 
-    # 可以在这里做全局中间件、事件、异常处理器注册等
-    # include 各模块的 router
-    app.include_router(prob_preview.router)   # 会自动挂载到 /file_preview（见 file_preview.py）
-    app.include_router(hw_preview.router)   # 会自动挂载到 /file_preview（见 file_preview.py）
-    app.include_router(ai_grading.router)   # 挂载到 /ai_grading
-    app.include_router(human_edit.router)
-    app.include_router(assignment.router)
+    # Include routers - these might initialize database connections
+    logger.info("📦 Including routers...")
+    try:
+        app.include_router(prob_preview.router)
+        logger.info("✅ prob_preview loaded")
+    except Exception as e:
+        logger.error(f"❌ prob_preview failed: {e}")
+    
+    try:
+        app.include_router(hw_preview.router)
+        logger.info("✅ hw_preview loaded")
+    except Exception as e:
+        logger.error(f"❌ hw_preview failed: {e}")
+    
+    try:
+        app.include_router(ai_grading.router)
+        logger.info("✅ ai_grading loaded")
+    except Exception as e:
+        logger.error(f"❌ ai_grading failed: {e}")
+    
+    try:
+        app.include_router(human_edit.router)
+        logger.info("✅ human_edit loaded")
+    except Exception as e:
+        logger.error(f"❌ human_edit failed: {e}")
+    
+    try:
+        app.include_router(assignment.router)
+        logger.info("✅ assignment loaded")
+    except Exception as e:
+        logger.error(f"❌ assignment failed: {e}")
     # Configure CORS for deployment
     # 从 .env 文件读取 FRONTEND_URLS 配置
     frontend_origins_str = os.environ.get("FRONTEND_URLS", "http://localhost:8501")
