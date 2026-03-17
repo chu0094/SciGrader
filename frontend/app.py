@@ -3,6 +3,7 @@ SciGrader 主应用入口
 理工科 AI 作业批改系统
 """
 import streamlit as st
+import os
 from utils.db_utils import check_session_state, get_db_manager, logout
 from pages.login import login_page
 from pages.teacher_dashboard import teacher_dashboard
@@ -18,8 +19,11 @@ def main():
         initial_sidebar_state="collapsed"
     )
     
-    # 加载自定义 CSS
-    with open("static/styles.css", "r", encoding='utf-8') as f:
+    # 加载自定义 CSS - 使用基于当前文件的路径
+    BASE_DIR = os.path.dirname(__file__)
+    css_path = os.path.join(BASE_DIR, "static", "styles.css")
+    
+    with open(css_path, "r", encoding='utf-8') as f:
         custom_css = f.read()
     st.markdown(f"<style>{custom_css}</style>", unsafe_allow_html=True)
     
