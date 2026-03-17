@@ -424,7 +424,9 @@ def handle_resubmit_assignment(assignment, content, files, previous_submission):
 def call_backend_ai_grading(assignment, content, submission_id):
     """调用后端 AI 批改 API ⭐"""
     # 后端 API 地址 ⭐ 根据实际运行端口调整
-    backend_url = "http://localhost:8000/ai_grading/submit"
+    # backend_url = "http://localhost:8000/ai_grading/submit"
+    # ⭐ 修改：从 secrets.toml 读取后端地址
+    backend_url = st.secrets.get("BACKEND_URL", "https://scigrader.onrender.com") + "/ai_grading/submit"
     
     # 获取作业包含的所有题目
     db = get_db_manager()
@@ -486,9 +488,8 @@ def call_backend_ai_grading(assignment, content, submission_id):
             "pending": True  # 标记为待处理
         }
     except requests.exceptions.RequestException as e:
-        st.error(f"后端 API 连接失败：{str(e)}")
-        st.info("请确保后端服务正在运行：http://localhost:8601")
-        raise Exception(f"AI 批改 API 调用失败：{str(e)}")
+        st.info("💡 作业已成功提交，但 AI 批改失败。请联系教师或稍后重试。")
+        # 不抛出异常，让用户可以看到友好提示
 
 def update_submission_grade(submission_id, grade_result):
     """更新提交评分 ⭐ 新增"""
