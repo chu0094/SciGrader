@@ -596,10 +596,9 @@ def show_assignment_details_dialog(assignment):
                 st.markdown("**题目内容：**")
                 st.write(problem['description'])
                 
-                # 如果有参考答案，折叠显示
+                # 如果有参考答案，使用折叠显示（避免在 dialog 中使用 expander）
                 if problem.get('reference_answer'):
-                    with st.expander("👁️ 查看参考答案（点击展开）"):
-                        st.warning(f"参考答案：\n\n{problem['reference_answer']}")
+                    st.info(f"**参考答案：**\n\n{problem['reference_answer']}")
                 
                 # 知识点标签
                 if problem.get('knowledge_points'):
