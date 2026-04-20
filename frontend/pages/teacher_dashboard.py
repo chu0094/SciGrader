@@ -447,25 +447,89 @@ def render_graded_work_section():
         return
     
     for work in graded_work:
-        with st.expander(f"**{work['student_name']} - {work['assignment_title']}**", expanded=False):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown(f"**学生姓名：** {work['student_name']}")
-                st.markdown(f"**作业编号：** {work['assignment_number']}")
-                st.markdown(f"**批改时间：** {work['graded_at']}")
-            
-            with col2:
-                score = work.get('auto_grade_score') or work.get('teacher_grade_score')
-                st.metric("系统评分", f"{score}分" if score else "未评分")
-            
-            if work.get('auto_grade_comments'):
-                st.text_area("系统评语", work['auto_grade_comments'], disabled=True, 
-                           key=f"auto_comments_{work.get('submission_id', work['student_name'])}")
-            
+        render_graded_work_card(work)
+
+
+def render_graded_work_card(work):
+    """渲染批改后作业卡片"""
+    submission_id = work.get('submission_id')
+    
+    with st.expander(f"**{work['student_name']}** - {work['assignment_title']}", expanded=False):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown(f"**学生姓名：** {work['student_name']}")
+            st.markdown(f"**作业编号：** {work['assignment_number']}")
+            st.markdown(f"**批改时间：** {work['graded_at']}")
+        
+        with col2:
+            auto_score = work.get('auto_grade_score')
+            teacher_score = work.get('teacher_grade_score')
+            st.metric("AI 评分", f"{auto_score}分" if auto_score else "未评分")
+            st.metric("教师评分", f"{teacher_score}分" if teacher_score else "未评分")
+        
+        # AI 评语
+        if work.get('auto_grade_comments'):
+            st.markdown("**🤖 AI 评语：**")
+            st.info(work['auto_grade_comments'])
+        
+        # 教师评语（可编辑）
+        st.markdown("**👨‍🏫 教师评语：**")
+        
+        # 检查是否正在编辑该提交
+        is_editing = st.session_state.get(f'editing_submission_{submission_id}')
+        
+        if is_editing:
+            render_edit_teacher_comments(work)
+        else:
+            # 显示评语和编辑按钮
             if work.get('teacher_comments'):
-                st.text_area("教师评语", work['teacher_comments'], disabled=True,
-                           key=f"teacher_comments_{work.get('submission_id', work['student_name'])}")
+                st.success(work['teacher_comments'])
+            else:
+                st.warning("暂无教师评语")
+            
+            if st.button("✏️ 修改评语", key=f"edit_comments_{submission_id}", use_container_width=True):
+                st.session_state[f'editing_submission_{submission_id}'] = True
+                st.rerun()
+
+
+def render_edit_teacher_comments(work):
+    """渲染编辑教师评语表单"""
+    submission_id = work.get('submission_id')
+    
+    with st.form(key=f"edit_comments_form_{submission_id}"):
+        # 显示当前评语
+        st.markdown("**📝 当前评语：**")
+        current_comments = work.get('teacher_comments', '')
+        if current_comments:
+            st.info(current_comments)
+        else:
+            st.info("（暂无评语）")
+        
+        # 输入新评语
+        st.markdown("**✍️ 输入新评语：**")
+        new_comments = st.text_area(
+            "",
+            value=current_comments,
+            height=150,
+            key=f"new_comments_{submission_id}",
+            placeholder="请输入您的评价和建议..."
+        )
+        
+        # 按钮
+        col1, col2 = st.columns(2)
+        with col1:
+            submit_button = st.form_submit_button("💾 保存评语", type="primary", use_container_width=True)
+        
+        with col2:
+            cancel_button = st.form_submit_button("❌ 取消", use_container_width=True)
+        
+        if submit_button:
+            handle_update_teacher_comments(submission_id, new_comments)
+        
+        if cancel_button:
+            st.session_state[f'editing_submission_{submission_id}'] = False
+            st.rerun()
 
 
 def render_delete_confirmation(assignment_id, assignment_title):
@@ -545,6 +609,32 @@ def handle_edit_assignment(assignment_id, title, course_name, total_score, due_d
             
     except Exception as e:
         st.error(f"❌ 更新作业时发生错误：{str(e)}")
+
+
+def handle_update_teacher_comments(submission_id, new_comments):
+    """处理更新教师评语逻辑"""
+    db = get_db_manager()
+    
+    try:
+        # 更新教师评语
+        result = db.update_teacher_comments(
+            submission_id,
+            new_comments,
+            st.session_state.user_id  # 记录批改教师
+        )
+        
+        if result:
+            st.success("✅ 评语更新成功！")
+            # 清除编辑状态
+            st.session_state[f'editing_submission_{submission_id}'] = False
+            import time
+            time.sleep(1)
+            st.rerun()
+        else:
+            st.error("❌ 评语更新失败，请重试")
+            
+    except Exception as e:
+        st.error(f"❌ 更新评语时发生错误：{str(e)}")
 
 
 def render_right_panel(user_info):

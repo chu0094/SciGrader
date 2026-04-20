@@ -291,6 +291,28 @@ class DatabaseManager:
             WHERE assignment_id = %s AND teacher_id = %s
         """
         return self.execute_query(query, update_data)
+    
+    def update_teacher_comments(self, submission_id, teacher_comments, teacher_id):
+        """更新教师评语
+        
+        Args:
+            submission_id: 提交记录ID
+            teacher_comments: 教师评语
+            teacher_id: 教师ID
+            
+        Returns:
+            bool: 更新是否成功
+        """
+        query = """
+            UPDATE submissions 
+            SET teacher_comments = %s,
+                teacher_grade_score = COALESCE(teacher_grade_score, auto_grade_score),
+                graded_by = %s,
+                graded_at = NOW(),
+                status = 'graded'
+            WHERE submission_id = %s
+        """
+        return self.execute_query(query, (teacher_comments, teacher_id, submission_id))
 
 
 @st.cache_resource
