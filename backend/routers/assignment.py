@@ -219,3 +219,39 @@ async def get_student_stats(student_id: int):
     except Exception as e:
         logger.error(f"获取统计数据失败：{e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{assignment_id}", summary="删除作业")
+async def delete_assignment(assignment_id: int, teacher_id: int):
+    """删除作业（只能删除自己创建的作业）
+    
+    Args:
+        assignment_id: 作业ID
+        teacher_id: 教师ID（用于验证权限）
+        
+    Returns:
+        dict: 删除结果
+    """
+    db = get_db_manager()
+    try:
+        result = db.delete_assignment(assignment_id, teacher_id)
+        
+        if result:
+            logger.info(f"作业删除成功：assignment_id={assignment_id}, teacher_id={teacher_id}")
+            return {
+                "status": "success",
+                "message": "作业删除成功",
+                "assignment_id": assignment_id
+            }
+        else:
+            logger.warning(f"作业删除失败：assignment_id={assignment_id}, teacher_id={teacher_id}")
+            raise HTTPException(
+                status_code=404, 
+                detail="作业不存在或无权删除"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"删除作业失败：{e}")
+        raise HTTPException(status_code=500, detail=str(e))

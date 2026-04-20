@@ -399,7 +399,7 @@ def render_assignment_card_teacher(assignment):
             st.markdown(f"**状态：** {status_badge}")
         
         # 操作按钮
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("👁️ 查看提交情况", key=f"view_{assignment['assignment_id']}", use_container_width=True):
                 st.session_state.current_assignment = assignment
@@ -408,6 +408,16 @@ def render_assignment_card_teacher(assignment):
         with col2:
             if st.button("✏️ 编辑作业", key=f"edit_{assignment['assignment_id']}", use_container_width=True):
                 pass
+        
+        with col3:
+            if st.button("🗑️ 删除作业", key=f"delete_{assignment['assignment_id']}", use_container_width=True, type="secondary"):
+                # 存储要删除的作业 ID
+                st.session_state.show_delete_confirm = assignment['assignment_id']
+                st.session_state.delete_assignment_title = assignment['assignment_title']
+    
+    # 显示删除确认对话框
+    if st.session_state.get('show_delete_confirm') == assignment['assignment_id']:
+        render_delete_confirmation(assignment['assignment_id'], st.session_state.get('delete_assignment_title', ''))
 
 
 def render_graded_work_section():
@@ -441,6 +451,49 @@ def render_graded_work_section():
             if work.get('teacher_comments'):
                 st.text_area("教师评语", work['teacher_comments'], disabled=True,
                            key=f"teacher_comments_{work.get('submission_id', work['student_name'])}")
+
+
+def render_delete_confirmation(assignment_id, assignment_title):
+    """渲染删除确认对话框"""
+    st.warning(f"⚠️ 您确定要删除作业 **{assignment_title}** 吗？")
+    st.info("ℹ️ 删除后将同时删除该作业的所有学生提交记录和批改记录，此操作不可恢复！")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("✅ 确认删除", key=f"confirm_delete_{assignment_id}", type="primary", use_container_width=True):
+            handle_delete_assignment(assignment_id)
+    
+    with col2:
+        if st.button("❌ 取消", key=f"cancel_delete_{assignment_id}", use_container_width=True):
+            # 清除删除确认状态
+            st.session_state.show_delete_confirm = None
+            st.session_state.delete_assignment_title = None
+            st.rerun()
+
+
+def handle_delete_assignment(assignment_id):
+    """处理删除作业逻辑"""
+    db = get_db_manager()
+    
+    try:
+        # 直接调用数据库管理器删除作业
+        result = db.delete_assignment(assignment_id, st.session_state.user_id)
+        
+        if result:
+            st.success(f"✅ 作业删除成功！")
+            # 清除删除确认状态
+            st.session_state.show_delete_confirm = None
+            st.session_state.delete_assignment_title = None
+            # 延迟一下让用户看到成功消息
+            import time
+            time.sleep(1)
+            st.rerun()
+        else:
+            st.error("❌ 作业删除失败，请重试")
+            
+    except Exception as e:
+        st.error(f"❌ 删除作业时发生错误：{str(e)}")
 
 
 def render_right_panel(user_info):

@@ -193,6 +193,35 @@ class DatabaseManager:
         """
         result = self.execute_query(query, (student_id,), fetch=True)
         return result[0] if result else None
+    
+    def delete_assignment(self, assignment_id: int, teacher_id: int) -> bool:
+        """删除作业（只能删除自己创建的作业）
+        
+        Args:
+            assignment_id: 作业ID
+            teacher_id: 教师ID（用于验证权限）
+            
+        Returns:
+            bool: 删除是否成功
+        """
+        # 先验证作业是否属于该教师
+        check_query = "SELECT assignment_id FROM assignments WHERE assignment_id = %s AND teacher_id = %s"
+        check_result = self.execute_query(check_query, (assignment_id, teacher_id), fetch=True)
+        
+        if not check_result:
+            logger.warning(f"⚠️ 作业不存在或无权删除：assignment_id={assignment_id}, teacher_id={teacher_id}")
+            return False
+        
+        # 删除作业（由于设置了 ON DELETE CASCADE，相关的 submissions 和 grading_records 会自动删除）
+        delete_query = "DELETE FROM assignments WHERE assignment_id = %s AND teacher_id = %s"
+        result = self.execute_query(delete_query, (assignment_id, teacher_id))
+        
+        if result:
+            logger.info(f"✅ 作业删除成功：assignment_id={assignment_id}")
+        else:
+            logger.error(f"❌ 作业删除失败：assignment_id={assignment_id}")
+        
+        return bool(result)
 
 
 # 单例模式（延迟初始化）

@@ -247,6 +247,30 @@ class DatabaseManager:
             ORDER BY s.graded_at DESC
         """
         return self.execute_query(query, (teacher_id,), fetch=True)
+    
+    def delete_assignment(self, assignment_id, teacher_id):
+        """删除作业（只能删除自己创建的作业）
+        
+        Args:
+            assignment_id: 作业ID
+            teacher_id: 教师ID（用于验证权限）
+            
+        Returns:
+            bool: 删除是否成功
+        """
+        # 先验证作业是否属于该教师
+        check_query = "SELECT assignment_id FROM assignments WHERE assignment_id = %s AND teacher_id = %s"
+        check_result = self.execute_query(check_query, (assignment_id, teacher_id), fetch=True)
+        
+        if not check_result:
+            st.warning(f"⚠️ 作业不存在或无权删除")
+            return False
+        
+        # 删除作业（由于设置了 ON DELETE CASCADE，相关的 submissions 和 grading_records 会自动删除）
+        delete_query = "DELETE FROM assignments WHERE assignment_id = %s AND teacher_id = %s"
+        result = self.execute_query(delete_query, (assignment_id, teacher_id))
+        
+        return bool(result)
 
 
 @st.cache_resource
