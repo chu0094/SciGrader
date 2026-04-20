@@ -46,6 +46,16 @@ def render_top_nav(user_info):
 def render_left_panel():
     """渲染左侧主要区域"""
     
+    # 检查是否显示提交情况
+    if st.session_state.get('show_submissions'):
+        render_submission_view()
+        return
+    
+    # 检查是否显示编辑作业
+    if st.session_state.get('show_edit_assignment'):
+        render_edit_assignment_view()
+        return
+    
     # 1. 新建题目模块
     render_create_problem_section()
     
@@ -404,10 +414,15 @@ def render_assignment_card_teacher(assignment):
             if st.button("👁️ 查看提交情况", key=f"view_{assignment['assignment_id']}", use_container_width=True):
                 st.session_state.current_assignment = assignment
                 st.session_state.show_submissions = True
+                st.session_state.show_edit_assignment = False
+                st.rerun()
         
         with col2:
             if st.button("✏️ 编辑作业", key=f"edit_{assignment['assignment_id']}", use_container_width=True):
-                pass
+                st.session_state.current_assignment = assignment
+                st.session_state.show_edit_assignment = True
+                st.session_state.show_submissions = False
+                st.rerun()
         
         with col3:
             if st.button("🗑️ 删除作业", key=f"delete_{assignment['assignment_id']}", use_container_width=True, type="secondary"):
@@ -496,6 +511,42 @@ def handle_delete_assignment(assignment_id):
         st.error(f"❌ 删除作业时发生错误：{str(e)}")
 
 
+def handle_edit_assignment(assignment_id, title, course_name, total_score, due_date, description):
+    """处理编辑作业逻辑"""
+    if not title:
+        st.error("请填写作业标题")
+        return
+    
+    db = get_db_manager()
+    
+    try:
+        # 更新作业信息
+        update_data = (
+            title,
+            description,
+            course_name,
+            total_score,
+            due_date,
+            assignment_id,
+            st.session_state.user_id  # 确保只能修改自己的作业
+        )
+        
+        result = db.update_assignment(update_data)
+        
+        if result:
+            st.success("✅ 作业更新成功！")
+            import time
+            time.sleep(1)
+            st.session_state.show_edit_assignment = False
+            st.session_state.current_assignment = None
+            st.rerun()
+        else:
+            st.error("❌ 作业更新失败，请重试")
+            
+    except Exception as e:
+        st.error(f"❌ 更新作业时发生错误：{str(e)}")
+
+
 def render_right_panel(user_info):
     """渲染右侧快捷操作面板"""
     
@@ -524,3 +575,185 @@ def render_right_panel(user_info):
             <p><strong>登录时间：</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     """, unsafe_allow_html=True)
+
+
+def render_submission_view():
+    """渲染作业提交情况视图"""
+    assignment = st.session_state.get('current_assignment')
+    
+    if not assignment:
+        st.error("未找到作业信息")
+        return
+    
+    # 返回按钮
+    if st.button("← 返回作业列表", key="back_to_assignments"):
+        st.session_state.show_submissions = False
+        st.session_state.current_assignment = None
+        st.rerun()
+    
+    st.markdown(f"### 👁️ {assignment['assignment_title']} - 提交情况")
+    
+    # 作业信息
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("作业编号", assignment['assignment_number'])
+    with col2:
+        st.metric("总分值", f"{assignment['total_score']}分")
+    with col3:
+        st.metric("截止时间", str(assignment['due_date']))
+    
+    st.divider()
+    
+    # 获取提交记录
+    db = get_db_manager()
+    submissions = db.get_assignment_submissions(assignment['assignment_id'])
+    
+    if not submissions:
+        st.info("📭 暂无学生提交")
+        return
+    
+    # 统计信息
+    total_students = len(submissions)
+    graded_count = sum(1 for s in submissions if s.get('status') == 'graded')
+    pending_count = total_students - graded_count
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("总提交数", total_students)
+    with col2:
+        st.metric("已批改", graded_count)
+    with col3:
+        st.metric("待批改", pending_count)
+    
+    st.divider()
+    
+    # 提交列表
+    st.markdown("### 📝 提交详情")
+    
+    for idx, submission in enumerate(submissions):
+        with st.expander(
+            f"**{submission['student_name']}** - 提交时间：{submission['submit_time']} - 状态：{submission['status']}",
+            expanded=False
+        ):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown(f"**学生姓名：** {submission['student_name']}")
+                st.markdown(f"**提交时间：** {submission['submit_time']}")
+                st.markdown(f"**状态：** {submission['status']}")
+            
+            with col2:
+                auto_score = submission.get('auto_grade_score')
+                teacher_score = submission.get('teacher_grade_score')
+                st.metric("AI 评分", f"{auto_score}分" if auto_score else "未评分")
+                st.metric("教师评分", f"{teacher_score}分" if teacher_score else "未评分")
+            
+            # 提交内容
+            st.markdown("**📄 提交内容：**")
+            st.text_area(
+                "",
+                value=submission.get('submission_content', ''),
+                height=150,
+                disabled=True,
+                key=f"submission_content_{submission['submission_id']}"
+            )
+            
+            # AI 评语
+            if submission.get('auto_grade_comments'):
+                st.markdown("**🤖 AI 评语：**")
+                st.info(submission['auto_grade_comments'])
+            
+            # 教师评语
+            if submission.get('teacher_comments'):
+                st.markdown("**👨‍🏫 教师评语：**")
+                st.success(submission['teacher_comments'])
+
+
+def render_edit_assignment_view():
+    """渲染编辑作业视图"""
+    assignment = st.session_state.get('current_assignment')
+    
+    if not assignment:
+        st.error("未找到作业信息")
+        return
+    
+    # 返回按钮
+    if st.button("← 返回作业列表", key="back_to_assignments_from_edit"):
+        st.session_state.show_edit_assignment = False
+        st.session_state.current_assignment = None
+        st.rerun()
+    
+    st.markdown(f"### ✏️ 编辑作业 - {assignment['assignment_title']}")
+    
+    db = get_db_manager()
+    
+    with st.form(key="edit_assignment_form"):
+        # 作业编号（不可编辑）
+        st.text_input("作业编号", value=assignment['assignment_number'], disabled=True)
+        
+        # 第一行：作业标题和课程名称
+        col1, col2 = st.columns(2)
+        with col1:
+            new_title = st.text_input(
+                "作业标题",
+                value=assignment['assignment_title'],
+                key="edit_assignment_title"
+            )
+        
+        with col2:
+            new_course = st.text_input(
+                "课程名称",
+                value=assignment['course_name'],
+                key="edit_course_name"
+            )
+        
+        # 第二行：总分和截止时间
+        col1, col2 = st.columns(2)
+        with col1:
+            new_total_score = st.number_input(
+                "总分值",
+                min_value=1,
+                max_value=1000,
+                value=int(assignment['total_score']),
+                key="edit_total_score"
+            )
+        
+        with col2:
+            from datetime import date
+            # 转换 due_date 为 date 对象
+            due_date_str = str(assignment['due_date'])
+            try:
+                due_date_val = date.fromisoformat(due_date_str)
+            except:
+                due_date_val = date.today()
+            
+            new_due_date = st.date_input(
+                "截止时间",
+                value=due_date_val,
+                key="edit_due_date"
+            )
+        
+        # 作业说明
+        new_description = st.text_area(
+            "作业说明",
+            value=assignment.get('assignment_description', ''),
+            height=100,
+            key="edit_assignment_description"
+        )
+        
+        # 提交按钮
+        submit_button = st.form_submit_button(
+            "💾 保存修改",
+            use_container_width=True,
+            type="primary"
+        )
+        
+        if submit_button:
+            handle_edit_assignment(
+                assignment['assignment_id'],
+                new_title,
+                new_course,
+                new_total_score,
+                new_due_date,
+                new_description
+            )

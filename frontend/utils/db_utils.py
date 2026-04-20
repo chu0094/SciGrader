@@ -271,6 +271,26 @@ class DatabaseManager:
         result = self.execute_query(delete_query, (assignment_id, teacher_id))
         
         return bool(result)
+    
+    def update_assignment(self, update_data):
+        """更新作业信息
+        
+        Args:
+            update_data: tuple (title, description, course_name, total_score, due_date, assignment_id, teacher_id)
+            
+        Returns:
+            bool: 更新是否成功
+        """
+        query = """
+            UPDATE assignments 
+            SET assignment_title = %s,
+                assignment_description = %s,
+                course_name = %s,
+                total_score = %s,
+                due_date = %s
+            WHERE assignment_id = %s AND teacher_id = %s
+        """
+        return self.execute_query(query, update_data)
 
 
 @st.cache_resource
